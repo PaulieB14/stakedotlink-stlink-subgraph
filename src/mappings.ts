@@ -9,18 +9,47 @@ import {
   Upgraded as UpgradedEvent,
 } from "../generated/ERC1967Proxy/ERC1967Proxy";
 import {
+  RewardsPoolWSD as RewardsPoolContract, // Add this for contract calls
+  Earnings,
   DistributeRewards,
   Withdraw,
   AdminChanged,
   BeaconUpgraded,
   Upgraded,
-  Earnings, // Import the Earnings entity
 } from "../generated/schema";
 
 function createId(event: ethereum.Event): Bytes {
   return Bytes.fromHexString(
     crypto.keccak256(event.transaction.hash.concatI32(event.logIndex.toI32())).toHex()
   ) as Bytes;
+}
+
+// Helper to fetch balance and shares data
+function updateEarningsData(account: Bytes): void {
+  let contract = RewardsPoolContract.bind(account);
+
+  // Assume contract has `balanceOf` and `sharesOf` functions
+  let balanceResult = contract.try_balanceOf(account);
+  let sharesResult = contract.try_sharesOf(account);
+
+  let earnings = Earnings.load(account.toHex());
+  if (!earnings) {
+    earnings = new Earnings(account.toHex());
+    earnings.account = account;
+    earnings.stLinkBalance = BigInt.fromI32(0);
+    earnings.rewardsAccumulated = BigInt.fromI32(0);
+  }
+
+  // Update based on contract call results
+  if (!balanceResult.reverted) {
+    earnings.stLinkBalance = balanceResult.value;
+  }
+
+  if (!sharesResult.reverted) {
+    earnings.rewardsAccumulated = sharesResult.value;
+  }
+
+  earnings.save();
 }
 
 export function handleDistributeRewards(event: DistributeRewardsEvent): void {
@@ -33,25 +62,8 @@ export function handleDistributeRewards(event: DistributeRewardsEvent): void {
   entity.transactionHash = event.transaction.hash;
   entity.save();
 
-  // Update or create Earnings entity
-  let earningsId = event.params.sender.toHex();
-  let earnings = Earnings.load(earningsId);
-
-  if (!earnings) {
-    earnings = new Earnings(earningsId);
-    earnings.account = event.params.sender;
-    earnings.stLinkBalance = BigInt.fromI32(0); // Initialize to zero or another appropriate starting value
-    earnings.rewardsAccumulated = BigInt.fromI32(0); // Initialize to zero or another appropriate starting value
-  }
-
-  // Update earnings based on this event
-  earnings.stLinkBalance = earnings.stLinkBalance.plus(event.params.amountStaked);
-  earnings.rewardsAccumulated = earnings.rewardsAccumulated.plus(event.params.amount);
-  earnings.blockNumber = event.block.number;
-  earnings.blockTimestamp = event.block.timestamp;
-  earnings.transactionHash = event.transaction.hash;
-
-  earnings.save();
+  // Update earnings for the sender
+  updateEarningsData(event.params.sender);
 }
 
 export function handleWithdraw(event: WithdrawEvent): void {
@@ -63,17 +75,8 @@ export function handleWithdraw(event: WithdrawEvent): void {
   entity.transactionHash = event.transaction.hash;
   entity.save();
 
-  // Update or adjust Earnings based on withdrawal
-  let earningsId = event.params.account.toHex();
-  let earnings = Earnings.load(earningsId);
-
-  if (earnings) {
-    earnings.stLinkBalance = earnings.stLinkBalance.minus(event.params.amount);
-    earnings.blockNumber = event.block.number;
-    earnings.blockTimestamp = event.block.timestamp;
-    earnings.transactionHash = event.transaction.hash;
-    earnings.save();
-  }
+  // Update earnings after withdrawal
+  updateEarningsData(event.params.account);
 }
 
 export function handleAdminChanged(event: AdminChangedEvent): void {

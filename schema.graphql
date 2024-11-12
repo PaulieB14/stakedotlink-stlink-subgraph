@@ -42,12 +42,13 @@ type Upgraded @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
-type Earnings @entity(immutable: true) {
+type Earnings @entity {
   id: ID!
-  account: Bytes! # address of the user or contract
-  stLinkBalance: BigInt! # current balance of stLINK
-  rewardsAccumulated: BigInt! # total accumulated rewards in stLINK
+  account: Bytes!
+  stLinkBalance: BigInt!
+  rewardsAccumulated: BigInt!
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
 }
+

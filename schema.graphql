@@ -1,6 +1,6 @@
 type DistributeRewards @entity(immutable: true) {
   id: Bytes!
-  sender: Bytes! # address of the user who initiated the reward distribution
+  sender: Bytes! # Address of the user who initiated the reward distribution
   amountStaked: BigInt! # Amount staked in this event
   amount: BigInt! # Reward amount distributed in this event
   blockNumber: BigInt!
@@ -10,7 +10,7 @@ type DistributeRewards @entity(immutable: true) {
 
 type Withdraw @entity(immutable: true) {
   id: Bytes!
-  account: Bytes! # address of the user withdrawing
+  account: Bytes! # Address of the user withdrawing
   amount: BigInt! # Amount withdrawn
   blockNumber: BigInt!
   blockTimestamp: BigInt!
@@ -19,8 +19,8 @@ type Withdraw @entity(immutable: true) {
 
 type AdminChanged @entity(immutable: true) {
   id: Bytes!
-  previousAdmin: Bytes! # address of the previous admin
-  newAdmin: Bytes! # address of the new admin
+  previousAdmin: Bytes! # Address of the previous admin
+  newAdmin: Bytes! # Address of the new admin
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -28,7 +28,7 @@ type AdminChanged @entity(immutable: true) {
 
 type BeaconUpgraded @entity(immutable: true) {
   id: Bytes!
-  beacon: Bytes! # address of the new beacon
+  beacon: Bytes! # Address of the new beacon
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -36,7 +36,7 @@ type BeaconUpgraded @entity(immutable: true) {
 
 type Upgraded @entity(immutable: true) {
   id: Bytes!
-  implementation: Bytes! # address of the new implementation contract
+  implementation: Bytes! # Address of the new implementation contract
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -44,7 +44,6 @@ type Upgraded @entity(immutable: true) {
 
 type ProtocolEarnings @entity {
   id: ID!
-  totalStaked: BigInt!
   totalRewardsDistributed: BigInt!
   blockNumber: BigInt!
   blockTimestamp: BigInt!
@@ -56,9 +55,8 @@ type AccountState @entity {
   account: Bytes! # Address of the account
   stLinkBalance: BigInt! # Current balance of stLINK
   rewardsAccumulated: BigInt! # Total accumulated rewards in stLINK
-   wrappedRewards: BigInt! # Total rewards in stLINK
+  wrappedRewards: BigInt! # Total rewards in stLINK
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
 }
-

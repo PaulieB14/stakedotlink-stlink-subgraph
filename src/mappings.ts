@@ -9,14 +9,16 @@ import {
   Upgraded as UpgradedEvent,
 } from "../generated/ERC1967Proxy/ERC1967Proxy";
 import {
-  RewardsPoolWSD as RewardsPoolContract, // Add this for contract calls
-  Earnings,
   DistributeRewards,
   Withdraw,
   AdminChanged,
   BeaconUpgraded,
   Upgraded,
+  Earnings,
 } from "../generated/schema";
+
+// Import the RewardsPoolWSD contract for view functions
+import { RewardsPoolWSD } from "../generated/RewardsPoolWSD/RewardsPoolWSD";
 
 function createId(event: ethereum.Event): Bytes {
   return Bytes.fromHexString(
@@ -24,13 +26,13 @@ function createId(event: ethereum.Event): Bytes {
   ) as Bytes;
 }
 
-// Helper to fetch balance and shares data
+// Helper function to update user reward data
 function updateEarningsData(account: Bytes): void {
-  let contract = RewardsPoolContract.bind(account);
+  let contract = RewardsPoolWSD.bind(account);
 
-  // Assume contract has `balanceOf` and `sharesOf` functions
-  let balanceResult = contract.try_balanceOf(account);
-  let sharesResult = contract.try_sharesOf(account);
+  // Try to get `userRewards` and `withdrawableRewards` for the account
+  let userRewardsResult = contract.try_userRewards(account);
+  let withdrawableRewardsResult = contract.try_withdrawableRewards(account);
 
   let earnings = Earnings.load(account.toHex());
   if (!earnings) {
@@ -41,12 +43,12 @@ function updateEarningsData(account: Bytes): void {
   }
 
   // Update based on contract call results
-  if (!balanceResult.reverted) {
-    earnings.stLinkBalance = balanceResult.value;
+  if (!userRewardsResult.reverted) {
+    earnings.rewardsAccumulated = userRewardsResult.value;
   }
 
-  if (!sharesResult.reverted) {
-    earnings.rewardsAccumulated = sharesResult.value;
+  if (!withdrawableRewardsResult.reverted) {
+    earnings.stLinkBalance = withdrawableRewardsResult.value;
   }
 
   earnings.save();

@@ -1,4 +1,4 @@
-import { Address, BigInt, Bytes, crypto, ethereum } from "@graphprotocol/graph-ts";
+import { BigInt, Bytes, Address, crypto, ethereum } from "@graphprotocol/graph-ts";
 import {
   DistributeRewards as DistributeRewardsEvent,
   Withdraw as WithdrawEvent,
@@ -14,23 +14,19 @@ import {
   AdminChanged,
   BeaconUpgraded,
   Upgraded,
-  Earnings,
+  Earnings, // Import the Earnings entity
 } from "../generated/schema";
 
-// Import the RewardsPoolWSD contract for view functions
-import { RewardsPoolWSD } from "../generated/RewardsPoolWSD/RewardsPoolWSD";
-
+// Utility function to create a unique ID
 function createId(event: ethereum.Event): Bytes {
   return Bytes.fromHexString(
     crypto.keccak256(event.transaction.hash.concatI32(event.logIndex.toI32())).toHex()
   ) as Bytes;
 }
 
-// Helper function to update user reward data
-function updateEarningsData(account: Bytes): void {
-  // Convert Bytes to Address for contract binding
+// Function to update or initialize Earnings data
+function updateEarningsData(account: Bytes, event: ethereum.Event): void {
   let accountAddress = Address.fromBytes(account);
-
   let contract = RewardsPoolWSD.bind(accountAddress);
 
   // Try to get `userRewards` and `withdrawableRewards` for the account
@@ -43,6 +39,10 @@ function updateEarningsData(account: Bytes): void {
     earnings.account = account;
     earnings.stLinkBalance = BigInt.fromI32(0);
     earnings.rewardsAccumulated = BigInt.fromI32(0);
+    // Set the block-related fields to avoid null errors
+    earnings.blockNumber = event.block.number;
+    earnings.blockTimestamp = event.block.timestamp;
+    earnings.transactionHash = event.transaction.hash;
   }
 
   // Update based on contract call results
@@ -54,9 +54,15 @@ function updateEarningsData(account: Bytes): void {
     earnings.stLinkBalance = withdrawableRewardsResult.value;
   }
 
+  // Update block-related fields for existing records
+  earnings.blockNumber = event.block.number;
+  earnings.blockTimestamp = event.block.timestamp;
+  earnings.transactionHash = event.transaction.hash;
+
   earnings.save();
 }
 
+// Event handler for DistributeRewards
 export function handleDistributeRewards(event: DistributeRewardsEvent): void {
   let entity = new DistributeRewards(createId(event));
   entity.amount = event.params.amount;
@@ -68,9 +74,10 @@ export function handleDistributeRewards(event: DistributeRewardsEvent): void {
   entity.save();
 
   // Update earnings for the sender
-  updateEarningsData(event.params.sender);
+  updateEarningsData(event.params.sender, event);
 }
 
+// Event handler for Withdraw
 export function handleWithdraw(event: WithdrawEvent): void {
   let entity = new Withdraw(createId(event));
   entity.account = event.params.account;
@@ -81,9 +88,10 @@ export function handleWithdraw(event: WithdrawEvent): void {
   entity.save();
 
   // Update earnings after withdrawal
-  updateEarningsData(event.params.account);
+  updateEarningsData(event.params.account, event);
 }
 
+// Event handler for AdminChanged
 export function handleAdminChanged(event: AdminChangedEvent): void {
   let entity = new AdminChanged(createId(event));
   entity.previousAdmin = event.params.previousAdmin;
@@ -94,6 +102,7 @@ export function handleAdminChanged(event: AdminChangedEvent): void {
   entity.save();
 }
 
+// Event handler for BeaconUpgraded
 export function handleBeaconUpgraded(event: BeaconUpgradedEvent): void {
   let entity = new BeaconUpgraded(createId(event));
   entity.beacon = event.params.beacon;
@@ -103,6 +112,7 @@ export function handleBeaconUpgraded(event: BeaconUpgradedEvent): void {
   entity.save();
 }
 
+// Event handler for Upgraded
 export function handleUpgraded(event: UpgradedEvent): void {
   let entity = new Upgraded(createId(event));
   entity.implementation = event.params.implementation;

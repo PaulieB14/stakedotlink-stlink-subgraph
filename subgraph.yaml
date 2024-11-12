@@ -1,0 +1,56 @@
+specVersion: 1.0.0
+indexerHints:
+  prune: auto
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: RewardsPoolWSD
+    network: mainnet
+    source:
+      address: "0x8753C00D1a94D04A01b931830011d882A3F8Cc72"
+      abi: RewardsPoolWSD
+      startBlock: 18178329
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - DistributeRewards
+        - Withdraw
+      abis:
+        - name: RewardsPoolWSD
+          file: ./abis/RewardsPoolWSD.json
+      eventHandlers:
+        - event: DistributeRewards(indexed address,uint256,uint256)
+          handler: handleDistributeRewards
+        - event: Withdraw(indexed address,uint256)
+          handler: handleWithdraw
+      file: ./src/mappings.ts  # Combined mapping file
+
+  - kind: ethereum
+    name: ERC1967Proxy
+    network: mainnet
+    source:
+      address: "0xb8b295df2cd735b15BE5Eb419517Aa626fc43cD5"
+      abi: ERC1967Proxy
+      startBlock: 16118200
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - AdminChanged
+        - BeaconUpgraded
+        - Upgraded
+      abis:
+        - name: ERC1967Proxy
+          file: ./abis/ERC1967Proxy.json
+      eventHandlers:
+        - event: AdminChanged(address,address)
+          handler: handleAdminChanged
+        - event: BeaconUpgraded(indexed address)
+          handler: handleBeaconUpgraded
+        - event: Upgraded(indexed address)
+          handler: handleUpgraded
+      file: ./src/mappings.ts  # Combined mapping file

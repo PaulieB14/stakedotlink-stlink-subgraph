@@ -14,9 +14,11 @@ import {
   AdminChanged,
   BeaconUpgraded,
   Upgraded,
-  Earnings, // Import the Earnings entity
+  Earnings,
+  ProtocolEarnings,
+  AccountState,
 } from "../generated/schema";
-import { RewardsPoolWSD } from "../generated/RewardsPoolWSD/RewardsPoolWSD"; // Ensure this import is correct
+import { RewardsPoolWSD } from "../generated/RewardsPoolWSD/RewardsPoolWSD";
 
 // Utility function to create a unique ID
 function createId(event: ethereum.Event): Bytes {
@@ -25,41 +27,54 @@ function createId(event: ethereum.Event): Bytes {
   ) as Bytes;
 }
 
-// Function to update or initialize Earnings data
-function updateEarningsData(account: Address, event: ethereum.Event): void {
-  let contract = RewardsPoolWSD.bind(account);  // Correcting the type to Address
+// Update ProtocolEarnings entity with total rewards and staked values
+function updateProtocolEarnings(event: ethereum.Event): void {
+  let protocol = ProtocolEarnings.load("protocol");
+  let contract = RewardsPoolWSD.bind(Address.fromString("0x8753C00D1a94D04A01b931830011d882A3F8Cc72"));
 
-  // Try to get `userRewards` and `withdrawableRewards` for the account
+  if (!protocol) {
+    protocol = new ProtocolEarnings("protocol");
+    protocol.totalStaked = BigInt.fromI32(0);
+    protocol.totalRewardsDistributed = BigInt.fromI32(0);
+  }
+
+  let totalStakedResult = contract.try_totalStaked();
+  if (!totalStakedResult.reverted) {
+    protocol.totalStaked = totalStakedResult.value;
+  }
+
+  protocol.blockNumber = event.block.number;
+  protocol.blockTimestamp = event.block.timestamp;
+  protocol.transactionHash = event.transaction.hash;
+  protocol.save();
+}
+
+// Update individual account state in AccountState entity
+function updateAccountState(account: Address, event: ethereum.Event): void {
+  let accountState = AccountState.load(account.toHex());
+  let contract = RewardsPoolWSD.bind(Address.fromString("0x8753C00D1a94D04A01b931830011d882A3F8Cc72"));
+
+  if (!accountState) {
+    accountState = new AccountState(account.toHex());
+    accountState.account = account;
+    accountState.stLinkBalance = BigInt.fromI32(0);
+    accountState.rewardsAccumulated = BigInt.fromI32(0);
+  }
+
   let userRewardsResult = contract.try_userRewards(account);
-  let withdrawableRewardsResult = contract.try_withdrawableRewards(account);
-
-  let earnings = Earnings.load(account.toHex());
-  if (!earnings) {
-    earnings = new Earnings(account.toHex());
-    earnings.account = account;
-    earnings.stLinkBalance = BigInt.fromI32(0);
-    earnings.rewardsAccumulated = BigInt.fromI32(0);
-    // Set the block-related fields to avoid null errors
-    earnings.blockNumber = event.block.number;
-    earnings.blockTimestamp = event.block.timestamp;
-    earnings.transactionHash = event.transaction.hash;
-  }
-
-  // Update based on contract call results
   if (!userRewardsResult.reverted) {
-    earnings.rewardsAccumulated = userRewardsResult.value;
+    accountState.rewardsAccumulated = userRewardsResult.value;
   }
 
+  let withdrawableRewardsResult = contract.try_withdrawableRewards(account);
   if (!withdrawableRewardsResult.reverted) {
-    earnings.stLinkBalance = withdrawableRewardsResult.value;
+    accountState.stLinkBalance = withdrawableRewardsResult.value;
   }
 
-  // Update block-related fields for existing records
-  earnings.blockNumber = event.block.number;
-  earnings.blockTimestamp = event.block.timestamp;
-  earnings.transactionHash = event.transaction.hash;
-
-  earnings.save();
+  accountState.blockNumber = event.block.number;
+  accountState.blockTimestamp = event.block.timestamp;
+  accountState.transactionHash = event.transaction.hash;
+  accountState.save();
 }
 
 // Event handler for DistributeRewards
@@ -73,8 +88,9 @@ export function handleDistributeRewards(event: DistributeRewardsEvent): void {
   entity.transactionHash = event.transaction.hash;
   entity.save();
 
-  // Update earnings for the sender
-  updateEarningsData(event.params.sender, event);
+  // Update protocol and account earnings
+  updateProtocolEarnings(event);
+  updateAccountState(event.params.sender, event);
 }
 
 // Event handler for Withdraw
@@ -87,8 +103,9 @@ export function handleWithdraw(event: WithdrawEvent): void {
   entity.transactionHash = event.transaction.hash;
   entity.save();
 
-  // Update earnings after withdrawal
-  updateEarningsData(event.params.account, event);
+  // Update protocol and account state after withdrawal
+  updateProtocolEarnings(event);
+  updateAccountState(event.params.account, event);
 }
 
 // Event handler for AdminChanged

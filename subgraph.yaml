@@ -18,6 +18,8 @@ dataSources:
       entities:
         - DistributeRewards
         - Withdraw
+        - ProtocolEarnings
+        - AccountState
       abis:
         - name: RewardsPoolWSD
           file: ./abis/RewardsPoolWSD.json
@@ -26,7 +28,7 @@ dataSources:
           handler: handleDistributeRewards
         - event: Withdraw(indexed address,uint256)
           handler: handleWithdraw
-      file: ./src/mappings.ts  # Combined mapping file
+      file: ./src/mappings.ts
 
   - kind: ethereum
     name: ERC1967Proxy
@@ -53,4 +55,4 @@ dataSources:
           handler: handleBeaconUpgraded
         - event: Upgraded(indexed address)
           handler: handleUpgraded
-      file: ./src/mappings.ts  # Combined mapping file
+      file: ./src/mappings.ts

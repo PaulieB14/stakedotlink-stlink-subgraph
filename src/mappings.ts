@@ -1,4 +1,4 @@
-import { BigInt, Bytes, crypto, ethereum } from "@graphprotocol/graph-ts";
+import { Address, BigInt, Bytes, crypto, ethereum } from "@graphprotocol/graph-ts";
 import {
   DistributeRewards as DistributeRewardsEvent,
   Withdraw as WithdrawEvent,
@@ -28,11 +28,14 @@ function createId(event: ethereum.Event): Bytes {
 
 // Helper function to update user reward data
 function updateEarningsData(account: Bytes): void {
-  let contract = RewardsPoolWSD.bind(account);
+  // Convert Bytes to Address for contract binding
+  let accountAddress = Address.fromBytes(account);
+
+  let contract = RewardsPoolWSD.bind(accountAddress);
 
   // Try to get `userRewards` and `withdrawableRewards` for the account
-  let userRewardsResult = contract.try_userRewards(account);
-  let withdrawableRewardsResult = contract.try_withdrawableRewards(account);
+  let userRewardsResult = contract.try_userRewards(accountAddress);
+  let withdrawableRewardsResult = contract.try_withdrawableRewards(accountAddress);
 
   let earnings = Earnings.load(account.toHex());
   if (!earnings) {

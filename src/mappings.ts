@@ -16,6 +16,7 @@ import {
   Upgraded,
   Earnings, // Import the Earnings entity
 } from "../generated/schema";
+import { RewardsPoolWSD } from "../generated/RewardsPoolWSD/RewardsPoolWSD"; // Ensure this import is correct
 
 // Utility function to create a unique ID
 function createId(event: ethereum.Event): Bytes {
@@ -25,13 +26,12 @@ function createId(event: ethereum.Event): Bytes {
 }
 
 // Function to update or initialize Earnings data
-function updateEarningsData(account: Bytes, event: ethereum.Event): void {
-  let accountAddress = Address.fromBytes(account);
-  let contract = RewardsPoolWSD.bind(accountAddress);
+function updateEarningsData(account: Address, event: ethereum.Event): void {
+  let contract = RewardsPoolWSD.bind(account);  // Correcting the type to Address
 
   // Try to get `userRewards` and `withdrawableRewards` for the account
-  let userRewardsResult = contract.try_userRewards(accountAddress);
-  let withdrawableRewardsResult = contract.try_withdrawableRewards(accountAddress);
+  let userRewardsResult = contract.try_userRewards(account);
+  let withdrawableRewardsResult = contract.try_withdrawableRewards(account);
 
   let earnings = Earnings.load(account.toHex());
   if (!earnings) {

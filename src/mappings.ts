@@ -14,7 +14,6 @@ import {
   AdminChanged,
   BeaconUpgraded,
   Upgraded,
-  Earnings,
   ProtocolEarnings,
   AccountState,
 } from "../generated/schema";
@@ -27,20 +26,13 @@ function createId(event: ethereum.Event): Bytes {
   ) as Bytes;
 }
 
-// Update ProtocolEarnings entity with total rewards and staked values
+// Update ProtocolEarnings entity
 function updateProtocolEarnings(event: ethereum.Event): void {
   let protocol = ProtocolEarnings.load("protocol");
-  let contract = RewardsPoolWSD.bind(Address.fromString("0x8753C00D1a94D04A01b931830011d882A3F8Cc72"));
 
   if (!protocol) {
     protocol = new ProtocolEarnings("protocol");
-    protocol.totalStaked = BigInt.fromI32(0);
     protocol.totalRewardsDistributed = BigInt.fromI32(0);
-  }
-
-  let totalStakedResult = contract.try_totalStaked();
-  if (!totalStakedResult.reverted) {
-    protocol.totalStaked = totalStakedResult.value;
   }
 
   protocol.blockNumber = event.block.number;
@@ -59,16 +51,19 @@ function updateAccountState(account: Address, event: ethereum.Event): void {
     accountState.account = account;
     accountState.stLinkBalance = BigInt.fromI32(0);
     accountState.rewardsAccumulated = BigInt.fromI32(0);
+    accountState.wrappedRewards = BigInt.fromI32(0);  // New field for wrapped rewards
   }
 
-  let userRewardsResult = contract.try_userRewards(account);
-  if (!userRewardsResult.reverted) {
-    accountState.rewardsAccumulated = userRewardsResult.value;
+  // Fetch unwrapped rewards
+  let unwrappedRewardsResult = contract.try_withdrawableRewards(account);
+  if (!unwrappedRewardsResult.reverted) {
+    accountState.rewardsAccumulated = unwrappedRewardsResult.value;
   }
 
-  let withdrawableRewardsResult = contract.try_withdrawableRewards(account);
-  if (!withdrawableRewardsResult.reverted) {
-    accountState.stLinkBalance = withdrawableRewardsResult.value;
+  // Fetch wrapped rewards
+  let wrappedRewardsResult = contract.try_withdrawableRewardsWrapped(account);
+  if (!wrappedRewardsResult.reverted) {
+    accountState.wrappedRewards = wrappedRewardsResult.value;
   }
 
   accountState.blockNumber = event.block.number;

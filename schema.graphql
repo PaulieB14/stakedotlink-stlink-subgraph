@@ -56,6 +56,7 @@ type AccountState @entity {
   account: Bytes! # Address of the account
   stLinkBalance: BigInt! # Current balance of stLINK
   rewardsAccumulated: BigInt! # Total accumulated rewards in stLINK
+   wrappedRewards: BigInt! # Total rewards in stLINK
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!

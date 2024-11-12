@@ -35,14 +35,6 @@ function updateProtocolEarnings(event: ethereum.Event): void {
     protocol.totalRewardsDistributed = BigInt.fromI32(0);
   }
 
-  // Fetch total rewards from contract
-  let contract = RewardsPoolWSD.bind(Address.fromString("0x8753C00D1a94D04A01b931830011d882A3F8Cc72"));
-  let totalRewardsResult = contract.try_totalRewards();
-
-  if (!totalRewardsResult.reverted) {
-    protocol.totalRewardsDistributed = totalRewardsResult.value;
-  }
-
   protocol.blockNumber = event.block.number;
   protocol.blockTimestamp = event.block.timestamp;
   protocol.transactionHash = event.transaction.hash;

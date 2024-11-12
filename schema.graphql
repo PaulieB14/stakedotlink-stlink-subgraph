@@ -16,6 +16,7 @@ type Withdraw @entity(immutable: true) {
   blockTimestamp: BigInt!
   transactionHash: Bytes!
 }
+
 type AdminChanged @entity(immutable: true) {
   id: Bytes!
   previousAdmin: Bytes! # address
@@ -50,4 +51,3 @@ type Earnings @entity(immutable: true) {
   blockTimestamp: BigInt!
   transactionHash: Bytes!
 }
-

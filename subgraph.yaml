@@ -38,7 +38,7 @@ dataSources:
     network: mainnet
     source:
       address: "0xb8b295df2cd735b15BE5Eb419517Aa626fc43cD5" # Address of the proxy contract
-      abi: ERC1967Proxy # ABI that includes balanceOf, sharesOf, and proxy upgrade events
+      abi: ERC1967Proxy # ABI that includes balanceOf, sharesOf, and proxy upgrade events from implementation contract
       startBlock: 16118200
     mapping:
       kind: ethereum/events

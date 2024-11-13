@@ -17,6 +17,7 @@ import {
   ProtocolEarnings,
   AccountState,
 } from "../generated/schema";
+import { RewardsPoolWSD } from "../generated/RewardsPoolWSD/RewardsPoolWSD";
 import { ERC1967Proxy } from "../generated/ERC1967Proxy/ERC1967Proxy";
 
 // Utility function to create a unique ID for events
@@ -46,7 +47,7 @@ function updateProtocolEarnings(event: ethereum.Event): void {
 // Update individual account state in AccountState entity
 function updateAccountState(account: Address, event: ethereum.Event): void {
   let accountState = AccountState.load(account.toHex());
-  let contract = ERC1967Proxy.bind(Address.fromString("0xb8b295df2cd735b15BE5Eb419517Aa626fc43cD5"));
+  let contract = RewardsPoolWSD.bind(Address.fromString("0x8753C00D1a94D04A01b931830011d882A3F8Cc72"));
 
   if (!accountState) {
     accountState = new AccountState(account.toHex());
@@ -78,6 +79,54 @@ function updateAccountState(account: Address, event: ethereum.Event): void {
     ]);
   } else {
     log.warning("sharesOf call reverted for account {}", [account.toHex()]);
+  }
+
+  // Fetch userRewardPerTokenPaid
+  let userRewardPerTokenPaidResult = contract.try_userRewardPerTokenPaid(account);
+  if (!userRewardPerTokenPaidResult.reverted) {
+    accountState.userRewardPerTokenPaid = userRewardPerTokenPaidResult.value;
+    log.info("Fetched userRewardPerTokenPaid for account {}: {}", [
+      account.toHex(),
+      userRewardPerTokenPaidResult.value.toString(),
+    ]);
+  } else {
+    log.warning("userRewardPerTokenPaid call reverted for account {}", [account.toHex()]);
+  }
+
+  // Fetch userRewards
+  let userRewardsResult = contract.try_userRewards(account);
+  if (!userRewardsResult.reverted) {
+    accountState.userRewards = userRewardsResult.value;
+    log.info("Fetched userRewards for account {}: {}", [
+      account.toHex(),
+      userRewardsResult.value.toString(),
+    ]);
+  } else {
+    log.warning("userRewards call reverted for account {}", [account.toHex()]);
+  }
+
+  // Fetch withdrawableRewards
+  let withdrawableRewardsResult = contract.try_withdrawableRewards(account);
+  if (!withdrawableRewardsResult.reverted) {
+    accountState.withdrawableRewards = withdrawableRewardsResult.value;
+    log.info("Fetched withdrawableRewards for account {}: {}", [
+      account.toHex(),
+      withdrawableRewardsResult.value.toString(),
+    ]);
+  } else {
+    log.warning("withdrawableRewards call reverted for account {}", [account.toHex()]);
+  }
+
+  // Fetch withdrawableRewardsWrapped
+  let withdrawableRewardsWrappedResult = contract.try_withdrawableRewardsWrapped(account);
+  if (!withdrawableRewardsWrappedResult.reverted) {
+    accountState.withdrawableRewardsWrapped = withdrawableRewardsWrappedResult.value;
+    log.info("Fetched withdrawableRewardsWrapped for account {}: {}", [
+      account.toHex(),
+      withdrawableRewardsWrappedResult.value.toString(),
+    ]);
+  } else {
+    log.warning("withdrawableRewardsWrapped call reverted for account {}", [account.toHex()]);
   }
 
   accountState.blockNumber = event.block.number;

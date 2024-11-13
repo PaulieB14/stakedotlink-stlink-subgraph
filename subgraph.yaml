@@ -24,13 +24,22 @@ dataSources:
       abis:
         - name: RewardsPoolWSD
           file: ./abis/RewardsPoolWSD.json
-        - name: ERC1967Proxy  # Add ERC1967Proxy here as well
+        - name: ERC1967Proxy
           file: ./abis/ERC1967Proxy.json
       eventHandlers:
         - event: DistributeRewards(indexed address,uint256,uint256)
           handler: handleDistributeRewards
         - event: Withdraw(indexed address,uint256)
           handler: handleWithdraw
+      callHandlers:
+        - function: userRewardPerTokenPaid(address)
+          handler: handleUserRewardPerTokenPaid
+        - function: userRewards(address)
+          handler: handleUserRewards
+        - function: withdrawableRewards(address)
+          handler: handleWithdrawableRewards
+        - function: withdrawableRewardsWrapped(address)
+          handler: handleWithdrawableRewardsWrapped
       file: ./src/mappings.ts
 
   - kind: ethereum

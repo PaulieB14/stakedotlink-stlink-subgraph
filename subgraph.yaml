@@ -5,13 +5,13 @@ schema:
   file: ./schema.graphql
 
 dataSources:
-  # Main data source for the RewardsPoolWSD contract
+  # Main data source for the RewardsPoolWSD contract (implementation contract)
   - kind: ethereum
     name: RewardsPoolWSD
     network: mainnet
     source:
-      address: "0xb8b295df2cd735b15BE5Eb419517Aa626fc43cD5" # Proxy address for RewardsPoolWSD implementation
-      abi: ImplementationContractABI # ABI from the actual implementation contract that includes necessary functions
+      address: "0x8753C00D1a94D04A01b931830011d882A3F8Cc72" # Address of the implementation contract
+      abi: RewardsPoolWSD # ABI that contains DistributeRewards and Withdraw events
       startBlock: 18178329
     mapping:
       kind: ethereum/events
@@ -23,8 +23,8 @@ dataSources:
         - ProtocolEarnings
         - AccountState
       abis:
-        - name: ImplementationContractABI
-          file: ./abis/ImplementationContractABI.json # Actual implementation contract ABI
+        - name: RewardsPoolWSD
+          file: ./abis/RewardsPoolWSD.json
       eventHandlers:
         - event: DistributeRewards(indexed address,uint256,uint256)
           handler: handleDistributeRewards
@@ -32,22 +32,23 @@ dataSources:
           handler: handleWithdraw
       file: ./src/mappings.ts
 
-  # Data source specifically for proxy-related events on ERC1967Proxy
+  # Data source for the ERC1967Proxy contract to access balanceOf and sharesOf
   - kind: ethereum
     name: ERC1967Proxy
     network: mainnet
     source:
-      address: "0xb8b295df2cd735b15BE5Eb419517Aa626fc43cD5" # Proxy address for implementation contract at 0xebc52afcfc9495ec083264ed68e8e6f454e5f715
-      abi: ERC1967Proxy
+      address: "0xb8b295df2cd735b15BE5Eb419517Aa626fc43cD5" # Address of the proxy contract
+      abi: ERC1967Proxy # ABI that includes balanceOf, sharesOf, and proxy upgrade events
       startBlock: 16118200
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.6
+      apiVersion: 0.0.7
       language: wasm/assemblyscript
       entities:
         - AdminChanged
         - BeaconUpgraded
         - Upgraded
+        - AccountState
       abis:
         - name: ERC1967Proxy
           file: ./abis/ERC1967Proxy.json

@@ -17,7 +17,7 @@ import {
   ProtocolEarnings,
   AccountState,
 } from "../generated/schema";
-import { RewardsPoolWSD } from "../generated/RewardsPoolWSD/RewardsPoolWSD";
+import { ERC1967Proxy } from "../generated/ERC1967Proxy/ERC1967Proxy";
 
 // Utility function to create a unique ID for events
 function createId(event: ethereum.Event): Bytes {
@@ -35,7 +35,6 @@ function updateProtocolEarnings(event: ethereum.Event): void {
     protocol.totalRewardsDistributed = BigInt.fromI32(0);
   }
 
-  // Update with event data
   protocol.blockNumber = event.block.number;
   protocol.blockTimestamp = event.block.timestamp;
   protocol.transactionHash = event.transaction.hash;
@@ -47,7 +46,7 @@ function updateProtocolEarnings(event: ethereum.Event): void {
 // Update individual account state in AccountState entity
 function updateAccountState(account: Address, event: ethereum.Event): void {
   let accountState = AccountState.load(account.toHex());
-  let contract = RewardsPoolWSD.bind(Address.fromString("0x8753C00D1a94D04A01b931830011d882A3F8Cc72"));
+  let contract = ERC1967Proxy.bind(Address.fromString("0xb8b295df2cd735b15BE5Eb419517Aa626fc43cD5"));
 
   if (!accountState) {
     accountState = new AccountState(account.toHex());
@@ -57,20 +56,29 @@ function updateAccountState(account: Address, event: ethereum.Event): void {
     accountState.wrappedRewards = BigInt.fromI32(0);
   }
 
-  // Fetch balanceOf without `try_`
-  let balanceOfResult = contract.balanceOf(account);
-  accountState.stLinkBalance = balanceOfResult;
-  log.info("Fetched stLinkBalance for account {}: {}", [
-    account.toHex(),
-    balanceOfResult.toString(),
-  ]);
+  // Fetch balanceOf using `try_balanceOf`
+  let balanceOfResult = contract.try_balanceOf(account);
+  if (!balanceOfResult.reverted) {
+    accountState.stLinkBalance = balanceOfResult.value;
+    log.info("Fetched stLinkBalance for account {}: {}", [
+      account.toHex(),
+      balanceOfResult.value.toString(),
+    ]);
+  } else {
+    log.warning("balanceOf call reverted for account {}", [account.toHex()]);
+  }
 
-  // Fetch sharesOf without `try_`
-  let sharesOfResult = contract.sharesOf(account);
-  log.info("Fetched sharesOf for account {}: {}", [
-    account.toHex(),
-    sharesOfResult.toString(),
-  ]);
+  // Fetch sharesOf using `try_sharesOf`
+  let sharesOfResult = contract.try_sharesOf(account);
+  if (!sharesOfResult.reverted) {
+    accountState.shares = sharesOfResult.value;
+    log.info("Fetched sharesOf for account {}: {}", [
+      account.toHex(),
+      sharesOfResult.value.toString(),
+    ]);
+  } else {
+    log.warning("sharesOf call reverted for account {}", [account.toHex()]);
+  }
 
   accountState.blockNumber = event.block.number;
   accountState.blockTimestamp = event.block.timestamp;

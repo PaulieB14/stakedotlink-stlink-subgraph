@@ -1,4 +1,4 @@
-import { BigInt, Bytes, Address, crypto, ethereum } from "@graphprotocol/graph-ts";
+import { BigInt, Bytes, Address, crypto, ethereum, log } from "@graphprotocol/graph-ts";
 import {
   DistributeRewards as DistributeRewardsEvent,
   Withdraw as WithdrawEvent,
@@ -19,7 +19,7 @@ import {
 } from "../generated/schema";
 import { RewardsPoolWSD } from "../generated/RewardsPoolWSD/RewardsPoolWSD";
 
-// Utility function to create a unique ID based on transaction hash and log index
+// Utility function to create a unique ID for events
 function createId(event: ethereum.Event): Bytes {
   return Bytes.fromHexString(
     crypto.keccak256(event.transaction.hash.concatI32(event.logIndex.toI32())).toHex()
@@ -35,10 +35,13 @@ function updateProtocolEarnings(event: ethereum.Event): void {
     protocol.totalRewardsDistributed = BigInt.fromI32(0);
   }
 
+  // Update with event data
   protocol.blockNumber = event.block.number;
   protocol.blockTimestamp = event.block.timestamp;
   protocol.transactionHash = event.transaction.hash;
   protocol.save();
+
+  log.info("ProtocolEarnings updated at block number: {}", [event.block.number.toString()]);
 }
 
 // Update individual account state in AccountState entity
@@ -51,29 +54,64 @@ function updateAccountState(account: Address, event: ethereum.Event): void {
     accountState.account = account;
     accountState.stLinkBalance = BigInt.fromI32(0);
     accountState.rewardsAccumulated = BigInt.fromI32(0);
-    accountState.wrappedRewards = BigInt.fromI32(0); // New field for wrapped rewards
+    accountState.wrappedRewards = BigInt.fromI32(0);
+  }
+
+  // Fetch the account's stLINK balance
+  let balanceOfResult = contract.try_balanceOf(account);
+  if (!balanceOfResult.reverted) {
+    accountState.stLinkBalance = balanceOfResult.value;
+    log.info("Fetched stLinkBalance for account {}: {}", [account.toHex(), balanceOfResult.value.toString()]);
+  } else {
+    log.warning("Failed to fetch stLinkBalance for account {}", [account.toHex()]);
+  }
+
+  // Fetch shares of the account
+  let sharesOfResult = contract.try_sharesOf(account);
+  if (!sharesOfResult.reverted) {
+    // You may want to save or log this if it’s helpful
+    log.info("Fetched sharesOf for account {}: {}", [account.toHex(), sharesOfResult.value.toString()]);
+  } else {
+    log.warning("Failed to fetch sharesOf for account {}", [account.toHex()]);
   }
 
   // Fetch unwrapped rewards
   let unwrappedRewardsResult = contract.try_withdrawableRewards(account);
   if (!unwrappedRewardsResult.reverted) {
     accountState.rewardsAccumulated = unwrappedRewardsResult.value;
+    log.info("Fetched unwrapped rewards for account {}: {}", [
+      account.toHex(),
+      unwrappedRewardsResult.value.toString(),
+    ]);
+  } else {
+    log.warning("Failed to fetch unwrapped rewards for account {}", [account.toHex()]);
   }
 
   // Fetch wrapped rewards
   let wrappedRewardsResult = contract.try_withdrawableRewardsWrapped(account);
   if (!wrappedRewardsResult.reverted) {
     accountState.wrappedRewards = wrappedRewardsResult.value;
+    log.info("Fetched wrapped rewards for account {}: {}", [
+      account.toHex(),
+      wrappedRewardsResult.value.toString(),
+    ]);
+  } else {
+    log.warning("Failed to fetch wrapped rewards for account {}", [account.toHex()]);
   }
 
   accountState.blockNumber = event.block.number;
   accountState.blockTimestamp = event.block.timestamp;
   accountState.transactionHash = event.transaction.hash;
   accountState.save();
+
+  log.info("AccountState updated for account: {}", [account.toHex()]);
 }
+
 
 // Event handler for DistributeRewards
 export function handleDistributeRewards(event: DistributeRewardsEvent): void {
+  log.info("Processing DistributeRewards event for sender: {}", [event.params.sender.toHex()]);
+
   let entity = new DistributeRewards(createId(event));
   entity.amount = event.params.amount;
   entity.sender = event.params.sender;
@@ -90,6 +128,8 @@ export function handleDistributeRewards(event: DistributeRewardsEvent): void {
 
 // Event handler for Withdraw
 export function handleWithdraw(event: WithdrawEvent): void {
+  log.info("Processing Withdraw event for account: {}", [event.params.account.toHex()]);
+
   let entity = new Withdraw(createId(event));
   entity.account = event.params.account;
   entity.amount = event.params.amount;
@@ -105,6 +145,11 @@ export function handleWithdraw(event: WithdrawEvent): void {
 
 // Event handler for AdminChanged
 export function handleAdminChanged(event: AdminChangedEvent): void {
+  log.info("Processing AdminChanged event from {} to {}", [
+    event.params.previousAdmin.toHex(),
+    event.params.newAdmin.toHex(),
+  ]);
+
   let entity = new AdminChanged(createId(event));
   entity.previousAdmin = event.params.previousAdmin;
   entity.newAdmin = event.params.newAdmin;
@@ -116,6 +161,8 @@ export function handleAdminChanged(event: AdminChangedEvent): void {
 
 // Event handler for BeaconUpgraded
 export function handleBeaconUpgraded(event: BeaconUpgradedEvent): void {
+  log.info("Processing BeaconUpgraded event for beacon: {}", [event.params.beacon.toHex()]);
+
   let entity = new BeaconUpgraded(createId(event));
   entity.beacon = event.params.beacon;
   entity.blockNumber = event.block.number;
@@ -126,6 +173,8 @@ export function handleBeaconUpgraded(event: BeaconUpgradedEvent): void {
 
 // Event handler for Upgraded
 export function handleUpgraded(event: UpgradedEvent): void {
+  log.info("Processing Upgraded event for implementation: {}", [event.params.implementation.toHex()]);
+
   let entity = new Upgraded(createId(event));
   entity.implementation = event.params.implementation;
   entity.blockNumber = event.block.number;

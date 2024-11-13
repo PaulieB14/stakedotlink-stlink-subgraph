@@ -53,10 +53,12 @@ type ProtocolEarnings @entity {
 type AccountState @entity {
   id: ID!
   account: Bytes! # Address of the account
-  stLinkBalance: BigInt! # Current balance of stLINK
+  stLinkBalance: BigInt! # Current balance of stLINK (e.g., fetched with balanceOf)
+  shares: BigInt # New field for sharesOf
   rewardsAccumulated: BigInt! # Total accumulated rewards in stLINK
-  wrappedRewards: BigInt! # Total rewards in stLINK
+  wrappedRewards: BigInt! # Total wrapped rewards in stLINK
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
 }
+

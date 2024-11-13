@@ -57,47 +57,20 @@ function updateAccountState(account: Address, event: ethereum.Event): void {
     accountState.wrappedRewards = BigInt.fromI32(0);
   }
 
-  // Fetch the account's stLINK balance
-  let balanceOfResult = contract.try_balanceOf(account);
-  if (!balanceOfResult.reverted) {
-    accountState.stLinkBalance = balanceOfResult.value;
-    log.info("Fetched stLinkBalance for account {}: {}", [account.toHex(), balanceOfResult.value.toString()]);
-  } else {
-    log.warning("Failed to fetch stLinkBalance for account {}", [account.toHex()]);
-  }
+  // Fetch balanceOf without `try_`
+  let balanceOfResult = contract.balanceOf(account);
+  accountState.stLinkBalance = balanceOfResult;
+  log.info("Fetched stLinkBalance for account {}: {}", [
+    account.toHex(),
+    balanceOfResult.toString(),
+  ]);
 
-  // Fetch shares of the account
-  let sharesOfResult = contract.try_sharesOf(account);
-  if (!sharesOfResult.reverted) {
-    // You may want to save or log this if it’s helpful
-    log.info("Fetched sharesOf for account {}: {}", [account.toHex(), sharesOfResult.value.toString()]);
-  } else {
-    log.warning("Failed to fetch sharesOf for account {}", [account.toHex()]);
-  }
-
-  // Fetch unwrapped rewards
-  let unwrappedRewardsResult = contract.try_withdrawableRewards(account);
-  if (!unwrappedRewardsResult.reverted) {
-    accountState.rewardsAccumulated = unwrappedRewardsResult.value;
-    log.info("Fetched unwrapped rewards for account {}: {}", [
-      account.toHex(),
-      unwrappedRewardsResult.value.toString(),
-    ]);
-  } else {
-    log.warning("Failed to fetch unwrapped rewards for account {}", [account.toHex()]);
-  }
-
-  // Fetch wrapped rewards
-  let wrappedRewardsResult = contract.try_withdrawableRewardsWrapped(account);
-  if (!wrappedRewardsResult.reverted) {
-    accountState.wrappedRewards = wrappedRewardsResult.value;
-    log.info("Fetched wrapped rewards for account {}: {}", [
-      account.toHex(),
-      wrappedRewardsResult.value.toString(),
-    ]);
-  } else {
-    log.warning("Failed to fetch wrapped rewards for account {}", [account.toHex()]);
-  }
+  // Fetch sharesOf without `try_`
+  let sharesOfResult = contract.sharesOf(account);
+  log.info("Fetched sharesOf for account {}: {}", [
+    account.toHex(),
+    sharesOfResult.toString(),
+  ]);
 
   accountState.blockNumber = event.block.number;
   accountState.blockTimestamp = event.block.timestamp;
@@ -106,7 +79,6 @@ function updateAccountState(account: Address, event: ethereum.Event): void {
 
   log.info("AccountState updated for account: {}", [account.toHex()]);
 }
-
 
 // Event handler for DistributeRewards
 export function handleDistributeRewards(event: DistributeRewardsEvent): void {

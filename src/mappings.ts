@@ -19,7 +19,7 @@ import {
 } from "../generated/schema";
 import { RewardsPoolWSD } from "../generated/RewardsPoolWSD/RewardsPoolWSD";
 
-// Utility function to create a unique ID
+// Utility function to create a unique ID based on transaction hash and log index
 function createId(event: ethereum.Event): Bytes {
   return Bytes.fromHexString(
     crypto.keccak256(event.transaction.hash.concatI32(event.logIndex.toI32())).toHex()
@@ -51,7 +51,7 @@ function updateAccountState(account: Address, event: ethereum.Event): void {
     accountState.account = account;
     accountState.stLinkBalance = BigInt.fromI32(0);
     accountState.rewardsAccumulated = BigInt.fromI32(0);
-    accountState.wrappedRewards = BigInt.fromI32(0);  // New field for wrapped rewards
+    accountState.wrappedRewards = BigInt.fromI32(0); // New field for wrapped rewards
   }
 
   // Fetch unwrapped rewards

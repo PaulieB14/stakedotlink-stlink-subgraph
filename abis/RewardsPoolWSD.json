@@ -11,24 +11,9 @@
   {
     "anonymous": false,
     "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "sender",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "amountStaked",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      }
+      { "indexed": true, "internalType": "address", "name": "sender", "type": "address" },
+      { "indexed": false, "internalType": "uint256", "name": "amountStaked", "type": "uint256" },
+      { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }
     ],
     "name": "DistributeRewards",
     "type": "event"
@@ -36,18 +21,8 @@
   {
     "anonymous": false,
     "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "account",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      }
+      { "indexed": true, "internalType": "address", "name": "account", "type": "address" },
+      { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }
     ],
     "name": "Withdraw",
     "type": "event"
@@ -56,11 +31,7 @@
     "inputs": [],
     "name": "controller",
     "outputs": [
-      {
-        "internalType": "contract IRewardsPoolController",
-        "name": "",
-        "type": "address"
-      }
+      { "internalType": "contract IRewardsPoolController", "name": "", "type": "address" }
     ],
     "stateMutability": "view",
     "type": "function"
@@ -93,9 +64,7 @@
   {
     "inputs": [],
     "name": "token",
-    "outputs": [
-      { "internalType": "contract IERC677", "name": "", "type": "address" }
-    ],
+    "outputs": [{ "internalType": "contract IERC677", "name": "", "type": "address" }],
     "stateMutability": "view",
     "type": "function"
   },
@@ -107,23 +76,21 @@
     "type": "function"
   },
   {
-    "inputs": [
-      { "internalType": "address", "name": "_account", "type": "address" }
-    ],
+    "inputs": [{ "internalType": "address", "name": "_account", "type": "address" }],
     "name": "updateReward",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
-    "inputs": [{ "internalType": "address", "name": "_account", "type": "address" }],
+    "inputs": [{ "internalType": "address", "name": "", "type": "address" }],
     "name": "userRewardPerTokenPaid",
     "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
     "stateMutability": "view",
     "type": "function"
   },
   {
-    "inputs": [{ "internalType": "address", "name": "_account", "type": "address" }],
+    "inputs": [{ "internalType": "address", "name": "", "type": "address" }],
     "name": "userRewards",
     "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
     "stateMutability": "view",
@@ -137,27 +104,21 @@
     "type": "function"
   },
   {
-    "inputs": [
-      { "internalType": "address", "name": "_account", "type": "address" }
-    ],
+    "inputs": [{ "internalType": "address", "name": "_account", "type": "address" }],
     "name": "withdraw",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
-    "inputs": [
-      { "internalType": "address", "name": "_account", "type": "address" }
-    ],
+    "inputs": [{ "internalType": "address", "name": "_account", "type": "address" }],
     "name": "withdrawableRewards",
     "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
     "stateMutability": "view",
     "type": "function"
   },
   {
-    "inputs": [
-      { "internalType": "address", "name": "_account", "type": "address" }
-    ],
+    "inputs": [{ "internalType": "address", "name": "_account", "type": "address" }],
     "name": "withdrawableRewardsWrapped",
     "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
     "stateMutability": "view",
@@ -167,11 +128,7 @@
     "inputs": [],
     "name": "wsdToken",
     "outputs": [
-      {
-        "internalType": "contract IWrappedSDToken",
-        "name": "",
-        "type": "address"
-      }
+      { "internalType": "contract IWrappedSDToken", "name": "", "type": "address" }
     ],
     "stateMutability": "view",
     "type": "function"

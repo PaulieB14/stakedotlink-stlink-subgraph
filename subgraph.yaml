@@ -1,6 +1,4 @@
-specVersion: 1.0.0
-indexerHints:
-  prune: auto
+specVersion: 0.0.4
 schema:
   file: ./schema.graphql
 
@@ -24,8 +22,6 @@ dataSources:
       abis:
         - name: RewardsPoolWSD
           file: ./abis/RewardsPoolWSD.json
-        - name: ERC1967Proxy
-          file: ./abis/ERC1967Proxy.json
       eventHandlers:
         - event: DistributeRewards(indexed address,uint256,uint256)
           handler: handleDistributeRewards
@@ -41,6 +37,7 @@ dataSources:
         - function: withdrawableRewardsWrapped(address)
           handler: handleWithdrawableRewardsWrapped
       file: ./src/mappings.ts
+
 
   - kind: ethereum
     name: ERC1967Proxy

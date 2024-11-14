@@ -28,13 +28,13 @@ dataSources:
         - event: Withdraw(indexed address,uint256)
           handler: handleWithdraw
       callHandlers:
-        - function: userRewardPerTokenPaid
+        - function: userRewardPerTokenPaid(address)
           handler: handleUserRewardPerTokenPaid
-        - function: userRewards
+        - function: userRewards(address)
           handler: handleUserRewards
-        - function: withdrawRewards
+        - function: withdrawRewards(address)
           handler: handleWithdrawableRewards
-        - function: withdrawableRewardsWrapped
+        - function: withdrawableRewardsWrapped(address)
           handler: handleWithdrawableRewardsWrapped
       file: ./src/mappings.ts
 

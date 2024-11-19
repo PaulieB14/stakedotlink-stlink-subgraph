@@ -1,7 +1,6 @@
 specVersion: 0.0.4
 schema:
   file: ./schema.graphql
-
 dataSources:
   - kind: ethereum
     name: RewardsPoolWSD
@@ -27,17 +26,7 @@ dataSources:
           handler: handleDistributeRewards
         - event: Withdraw(indexed address,uint256)
           handler: handleWithdraw
-      callHandlers:
-        - function: userRewardPerTokenPaid(address)
-          handler: handleUserRewardPerTokenPaid
-        - function: userRewards(address)
-          handler: handleUserRewards
-        - function: withdrawRewards(address)
-          handler: handleWithdrawableRewards
-        - function: withdrawableRewardsWrapped(address)
-          handler: handleWithdrawableRewardsWrapped
-      file: ./src/mappings.ts
-
+      file: ./src/rewards-pool-wsd.ts
   - kind: ethereum
     name: ERC1967Proxy
     network: mainnet
@@ -64,4 +53,27 @@ dataSources:
           handler: handleBeaconUpgraded
         - event: Upgraded(indexed address)
           handler: handleUpgraded
-      file: ./src/mappings.ts
+      file: ./src/erc-1967-proxy.ts
+  - kind: ethereum
+    name: WrappedSDToken
+    network: mainnet
+    source:
+      address: "0x911D86C72155c33993d594B0Ec7E6206B4C803da"
+      abi: WrappedSDToken
+      startBlock: 16118202
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - Approval
+        - Transfer
+      abis:
+        - name: WrappedSDToken
+          file: ./abis/WrappedSDToken.json
+      eventHandlers:
+        - event: Approval(indexed address,indexed address,uint256)
+          handler: handleApproval
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer
+      file: ./src/wrapped-sd-token.ts

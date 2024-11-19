@@ -6,6 +6,9 @@
     },
     "ERC1967Proxy": {
       "address": "0x1c6ee3b4e153afcfbb5280daa8ba2319aa82f3223c156b5433ee0d079086c378"
+    },
+    "WrappedSDToken": {
+      "address": "0x911D86C72155c33993d594B0Ec7E6206B4C803da"
     }
   }
 }

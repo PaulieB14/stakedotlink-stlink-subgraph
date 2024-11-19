@@ -86,14 +86,14 @@
     "inputs": [{ "internalType": "address", "name": "", "type": "address" }],
     "name": "userRewardPerTokenPaid",
     "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
-    "stateMutability": "view",
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
     "inputs": [{ "internalType": "address", "name": "", "type": "address" }],
     "name": "userRewards",
     "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
-    "stateMutability": "view",
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -121,14 +121,14 @@
     "inputs": [{ "internalType": "address", "name": "_account", "type": "address" }],
     "name": "withdrawableRewards",
     "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
-    "stateMutability": "view",
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
     "inputs": [{ "internalType": "address", "name": "_account", "type": "address" }],
     "name": "withdrawableRewardsWrapped",
     "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
-    "stateMutability": "view",
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {

@@ -53,6 +53,9 @@ dataSources:
           handler: handleBeaconUpgraded
         - event: Upgraded(indexed address)
           handler: handleUpgraded
+      callHandlers:
+        - function: balanceOf(address)
+          handler: handleBalanceOf
       file: ./src/erc-1967-proxy.ts
   - kind: ethereum
     name: WrappedSDToken

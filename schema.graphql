@@ -3,6 +3,7 @@ type DistributeRewards @entity(immutable: true) {
   sender: Bytes! # Address of the user who initiated the reward distribution
   amountStaked: BigInt! # Amount staked in this event
   amount: BigInt! # Reward amount distributed in this event
+  totalParticipants: Int # Number of users staked in the pool during this distribution
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -56,7 +57,10 @@ type AccountState @entity {
   stLinkBalance: BigInt! # Current balance of stLINK (e.g., fetched with balanceOf)
   shares: BigInt # New field for sharesOf
   rewardsAccumulated: BigInt! # Total accumulated rewards in stLINK
-  wrappedRewards: BigInt! # Total wrapped rewards in stLINK
+  wrappedRewards: BigInt! # Total wrapped rewards in stLINK (use getWrappedByUnderlying)
+  withdrawableRewards: BigInt! # Total rewards available for withdrawal (use withdrawableRewards function)
+  wrappedTokenBalance: BigInt! # Balance of wrapped token (use balanceOf)
+  lastUpdated: BigInt! # The timestamp when data was last updated
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -77,6 +81,16 @@ type Transfer @entity(immutable: true) {
   from: Bytes! # address
   to: Bytes! # address
   value: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type UserRewardDistribution @entity(immutable: true) {
+  id: ID!
+  account: Bytes! # Address of the user receiving rewards
+  amount: BigInt! # Amount of reward distributed to this user
+  totalStaked: BigInt! # Total amount staked by this user at the time of reward distribution
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!

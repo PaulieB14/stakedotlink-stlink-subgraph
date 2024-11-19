@@ -2,12 +2,17 @@ import {
   AdminChanged as AdminChangedEvent,
   BeaconUpgraded as BeaconUpgradedEvent,
   Upgraded as UpgradedEvent,
+  balanceOfCall,
+  ERC1967Proxy as ERC1967ProxyContract,
 } from "../generated/ERC1967Proxy/ERC1967Proxy"
-import { AdminChanged, BeaconUpgraded, Upgraded } from "../generated/schema"
+import { AdminChanged, BeaconUpgraded, Upgraded, AccountState } from "../generated/schema"
+import { BigInt } from "@graphprotocol/graph-ts"
+
+// Existing Event Handlers
 
 export function handleAdminChanged(event: AdminChangedEvent): void {
   let entity = new AdminChanged(
-    event.transaction.hash.concatI32(event.logIndex.toI32()),
+    event.transaction.hash.concatI32(event.logIndex.toI32())
   )
   entity.previousAdmin = event.params.previousAdmin
   entity.newAdmin = event.params.newAdmin
@@ -21,7 +26,7 @@ export function handleAdminChanged(event: AdminChangedEvent): void {
 
 export function handleBeaconUpgraded(event: BeaconUpgradedEvent): void {
   let entity = new BeaconUpgraded(
-    event.transaction.hash.concatI32(event.logIndex.toI32()),
+    event.transaction.hash.concatI32(event.logIndex.toI32())
   )
   entity.beacon = event.params.beacon
 
@@ -34,7 +39,7 @@ export function handleBeaconUpgraded(event: BeaconUpgradedEvent): void {
 
 export function handleUpgraded(event: UpgradedEvent): void {
   let entity = new Upgraded(
-    event.transaction.hash.concatI32(event.logIndex.toI32()),
+    event.transaction.hash.concatI32(event.logIndex.toI32())
   )
   entity.implementation = event.params.implementation
 
@@ -43,4 +48,32 @@ export function handleUpgraded(event: UpgradedEvent): void {
   entity.transactionHash = event.transaction.hash
 
   entity.save()
+}
+
+// Handle balanceOf Call Handler
+export function handleBalanceOf(call: balanceOfCall): void {
+  // Get the account address from the call inputs
+  let accountAddress = call.inputs._account
+
+  // Get or create the AccountState entity
+  let accountState = AccountState.load(accountAddress.toHex())
+  if (accountState == null) {
+    accountState = new AccountState(accountAddress.toHex())
+    accountState.account = accountAddress
+    accountState.stLinkBalance = BigInt.fromI32(0)  // Initialize as zero if not previously defined
+    accountState.rewardsAccumulated = BigInt.fromI32(0)
+    accountState.wrappedRewards = BigInt.fromI32(0)
+    accountState.withdrawableRewards = BigInt.fromI32(0)
+    accountState.wrappedTokenBalance = BigInt.fromI32(0)
+    accountState.lastUpdated = call.block.timestamp
+  }
+
+  // Update the stLinkBalance with the balance obtained from the contract call
+  accountState.stLinkBalance = call.outputs.value
+  accountState.blockNumber = call.block.number
+  accountState.blockTimestamp = call.block.timestamp
+  accountState.transactionHash = call.transaction.hash
+  accountState.lastUpdated = call.block.timestamp
+
+  accountState.save()
 }

@@ -6,9 +6,8 @@ import {
 } from "../generated/ERC1967Proxy/ERC1967Proxy";
 import { AdminChanged, BeaconUpgraded, Upgraded, AccountState } from "../generated/schema";
 import { Address, BigInt, ethereum, log } from "@graphprotocol/graph-ts";
-import { WrappedSDToken as WrappedSDTokenContract } from "../generated/WrappedSDToken/WrappedSDToken"; // Correct import for the ERC20 token ABI
 
-// Update this address to point to the stLINK token contract address
+// Update this address to point to the stLINK token contract address (Proxy contract address)
 let stLinkTokenAddress = Address.fromString("0xb8b295df2cd735b15BE5Eb419517Aa626fc43cD5");
 
 // Handle AdminChanged event
@@ -69,8 +68,8 @@ function updateAccountBalance(
   accountAddress: Address,
   event: ethereum.Event
 ): void {
-  // Bind the ERC20 token contract to the stLinkTokenAddress
-  let contract = WrappedSDTokenContract.bind(contractAddress);
+  // Bind the Proxy contract to get the balance of stLINK
+  let contract = ERC1967ProxyContract.bind(contractAddress);
 
   // Try to get the balance for the provided account address
   let balanceResult = contract.try_balanceOf(accountAddress);

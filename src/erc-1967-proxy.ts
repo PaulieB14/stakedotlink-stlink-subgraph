@@ -2,12 +2,14 @@ import {
   AdminChanged as AdminChangedEvent,
   BeaconUpgraded as BeaconUpgradedEvent,
   Upgraded as UpgradedEvent,
-  ERC1967Proxy as ERC1967ProxyContract
+  ERC1967Proxy as ERC1967ProxyContract,
 } from "../generated/ERC1967Proxy/ERC1967Proxy";
 import { AdminChanged, BeaconUpgraded, Upgraded, AccountState } from "../generated/schema";
-import { BigInt, log } from "@graphprotocol/graph-ts";
+import { Address, BigInt, log } from "@graphprotocol/graph-ts";
+import { WrappedSDToken as WrappedSDTokenContract } from "../generated/ERC1967Proxy/WrappedSDToken"; // Import the ERC20 token ABI.
 
-// Existing Event Handlers
+// Update this address to point to the stLINK token contract address
+let stLinkTokenAddress = Address.fromString("0xYourStLinkTokenAddress");
 
 // Handle AdminChanged event
 export function handleAdminChanged(event: AdminChangedEvent): void {
@@ -24,7 +26,7 @@ export function handleAdminChanged(event: AdminChangedEvent): void {
   entity.save();
 
   // Update balance when the admin changes (if necessary)
-  handleBalanceUpdate(event);
+  updateAccountBalance(stLinkTokenAddress, event.params.newAdmin, event);
 }
 
 // Handle BeaconUpgraded event
@@ -55,15 +57,16 @@ export function handleUpgraded(event: UpgradedEvent): void {
   entity.save();
 }
 
-// Updated: Bind Contract to Access `balanceOf` in an Event Handler
-export function handleBalanceUpdate(event: AdminChangedEvent): void {
-  // Bind the contract to the address
-  let contract = ERC1967ProxyContract.bind(event.address);
+// Helper function to update account balance
+function updateAccountBalance(
+  contractAddress: Address,
+  accountAddress: Address,
+  event: AdminChangedEvent
+): void {
+  // Bind the ERC20 token contract to the stLinkTokenAddress
+  let contract = WrappedSDTokenContract.bind(contractAddress);
 
-  // Define the account address you want to get the balance for
-  let accountAddress = event.params.newAdmin; // Example usage, adjust as needed
-
-  // Call the `balanceOf` function from the contract
+  // Try to get the balance for the provided account address
   let balanceResult = contract.try_balanceOf(accountAddress);
 
   if (balanceResult.reverted) {

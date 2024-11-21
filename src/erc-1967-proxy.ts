@@ -5,11 +5,11 @@ import {
   ERC1967Proxy as ERC1967ProxyContract,
 } from "../generated/ERC1967Proxy/ERC1967Proxy";
 import { AdminChanged, BeaconUpgraded, Upgraded, AccountState } from "../generated/schema";
-import { Address, BigInt, log } from "@graphprotocol/graph-ts";
-import { WrappedSDToken as WrappedSDTokenContract } from "../generated/ERC1967Proxy/WrappedSDToken"; // Import the ERC20 token ABI.
+import { Address, BigInt, ethereum, log } from "@graphprotocol/graph-ts";
+import { WrappedSDToken as WrappedSDTokenContract } from "../generated/WrappedSDToken/WrappedSDToken"; // Correct import for the ERC20 token ABI
 
 // Update this address to point to the stLINK token contract address
-let stLinkTokenAddress = Address.fromString("0xYourStLinkTokenAddress");
+let stLinkTokenAddress = Address.fromString("0xb8b295df2cd735b15BE5Eb419517Aa626fc43cD5");
 
 // Handle AdminChanged event
 export function handleAdminChanged(event: AdminChangedEvent): void {
@@ -25,7 +25,7 @@ export function handleAdminChanged(event: AdminChangedEvent): void {
 
   entity.save();
 
-  // Update balance when the admin changes (if necessary)
+  // Update balance when the admin changes
   updateAccountBalance(stLinkTokenAddress, event.params.newAdmin, event);
 }
 
@@ -41,6 +41,9 @@ export function handleBeaconUpgraded(event: BeaconUpgradedEvent): void {
   entity.transactionHash = event.transaction.hash;
 
   entity.save();
+
+  // Optionally update balance for relevant accounts
+  // updateAccountBalance(stLinkTokenAddress, relevantAccountAddress, event);
 }
 
 // Handle Upgraded event
@@ -55,13 +58,16 @@ export function handleUpgraded(event: UpgradedEvent): void {
   entity.transactionHash = event.transaction.hash;
 
   entity.save();
+
+  // Optionally update balance for relevant accounts
+  // updateAccountBalance(stLinkTokenAddress, relevantAccountAddress, event);
 }
 
 // Helper function to update account balance
 function updateAccountBalance(
   contractAddress: Address,
   accountAddress: Address,
-  event: AdminChangedEvent
+  event: ethereum.Event
 ): void {
   // Bind the ERC20 token contract to the stLinkTokenAddress
   let contract = WrappedSDTokenContract.bind(contractAddress);
@@ -72,6 +78,11 @@ function updateAccountBalance(
   if (balanceResult.reverted) {
     log.warning("balanceOf call reverted for account: {}", [accountAddress.toHex()]);
   } else {
+    log.info("balanceOf call succeeded for account: {}, balance: {}", [
+      accountAddress.toHex(),
+      balanceResult.value.toString(),
+    ]);
+
     // Load or create an AccountState entity for storing balance information
     let accountState = AccountState.load(accountAddress.toHex());
     if (accountState == null) {

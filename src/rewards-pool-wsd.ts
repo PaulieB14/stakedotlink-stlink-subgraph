@@ -11,7 +11,7 @@ function getOrCreateAccountState(account: Address): AccountState {
   if (!accountState) {
     accountState = new AccountState(account.toHex());
     accountState.account = account;
-    accountState.stLinkBalance = BigInt.fromI32(0);
+    accountState.stLinkBalance = BigInt.fromI32(0); // This should only be updated by querying the balance from the ERC1967Proxy contract
     accountState.rewardsAccumulated = BigInt.fromI32(0);
     accountState.wrappedRewards = BigInt.fromI32(0);
     accountState.withdrawableRewards = BigInt.fromI32(0);
@@ -36,7 +36,7 @@ export function handleDistributeRewards(event: DistributeRewardsEvent): void {
 
   entity.save();
 
-  // Update AccountState for the sender
+  // Update AccountState for the sender, specifically for rewardsAccumulated
   let accountState = getOrCreateAccountState(event.params.sender);
   accountState.rewardsAccumulated = accountState.rewardsAccumulated.plus(event.params.amount);
   accountState.blockNumber = event.block.number;
@@ -66,15 +66,15 @@ export function handleWithdraw(event: WithdrawEvent): void {
 
   entity.save();
 
-  // Update AccountState for the account
+  // Update AccountState for the account, specifically for rewards and not stLinkBalance
   let accountState = getOrCreateAccountState(event.params.account);
 
-  // Prevent negative balance
-  if (accountState.stLinkBalance.ge(event.params.amount)) {
-    accountState.stLinkBalance = accountState.stLinkBalance.minus(event.params.amount);
+  // Here we handle withdrawal of staked rewards, not stLink token balance
+  if (accountState.rewardsAccumulated.ge(event.params.amount)) {
+    accountState.rewardsAccumulated = accountState.rewardsAccumulated.minus(event.params.amount);
   } else {
-    accountState.stLinkBalance = BigInt.fromI32(0);
-    log.warning("Attempted to withdraw more than available balance for account {}", [
+    accountState.rewardsAccumulated = BigInt.fromI32(0);
+    log.warning("Attempted to withdraw more rewards than available for account {}", [
       event.params.account.toHex()
     ]);
   }
@@ -84,9 +84,9 @@ export function handleWithdraw(event: WithdrawEvent): void {
   accountState.transactionHash = event.transaction.hash;
   accountState.lastUpdated = event.block.timestamp;
 
-  log.info("Updated stLinkBalance for account {} to {}", [
+  log.info("Updated rewardsAccumulated for account {} to {}", [
     accountState.account.toHex(),
-    accountState.stLinkBalance.toString()
+    accountState.rewardsAccumulated.toString()
   ]);
 
   accountState.save();

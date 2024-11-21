@@ -68,7 +68,13 @@ function updateAccountBalance(
   accountAddress: Address,
   event: ethereum.Event
 ): void {
-  // Bind the Proxy contract to get the balance of stLINK
+  // Log the start of the updateAccountBalance process
+  log.info("Attempting to update balance for account: {}, using contract: {}", [
+    accountAddress.toHex(),
+    contractAddress.toHex(),
+  ]);
+
+  // Bind the ERC20 token contract to the stLinkTokenAddress
   let contract = ERC1967ProxyContract.bind(contractAddress);
 
   // Try to get the balance for the provided account address
@@ -100,6 +106,12 @@ function updateAccountBalance(
     accountState.blockTimestamp = event.block.timestamp;
     accountState.transactionHash = event.transaction.hash;
     accountState.lastUpdated = event.block.timestamp;
+
+    // Log the updated balance for debugging
+    log.info("Updated stLinkBalance for account: {} to: {}", [
+      accountAddress.toHex(),
+      balanceResult.value.toString(),
+    ]);
 
     accountState.save();
   }

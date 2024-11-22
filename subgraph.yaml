@@ -83,3 +83,10 @@ dataSources:
         - event: Transfer(indexed address,indexed address,uint256)
           handler: handleTransfer
       file: ./src/wrapped-sd-token.ts
+
+templates:
+  - name: ERC20Template
+    kind: ethereum/contract
+    network: mainnet
+    source:
+      abi: ERC20

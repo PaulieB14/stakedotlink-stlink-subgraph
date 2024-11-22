@@ -2,15 +2,15 @@ import {
   AdminChanged as AdminChangedEvent,
   BeaconUpgraded as BeaconUpgradedEvent,
   Upgraded as UpgradedEvent,
-  ERC1967Proxy as ERC1967ProxyContract,  // Importing this for event handling from the Proxy
+  ERC1967Proxy as ERC1967ProxyContract, // Importing this for event handling from the Proxy
 } from "../generated/ERC1967Proxy/ERC1967Proxy";
 
-import { ERC20 } from "../generated/ERC20/ERC20"; // Import the ERC20 binding to access functions like balanceOf
+import { ERC20Template } from "../generated/templates"; // Import the ERC20 template to create instances dynamically
 import { AdminChanged, BeaconUpgraded, Upgraded, AccountState } from "../generated/schema";
 import { Address, BigInt, ethereum, log } from "@graphprotocol/graph-ts";
 
 // Update this address to point to the stLINK token contract address (Proxy contract address)
-let stLinkTokenAddress = Address.fromString("0xb8b295df2cd735b15BE5Eb419517Aa626fc43cD5");
+let stLinkTokenAddress = Address.fromString("0xb8b295df2cd735b15be5eb419517aa626fc43cD5");
 
 // Handle AdminChanged event
 export function handleAdminChanged(event: AdminChangedEvent): void {
@@ -28,6 +28,9 @@ export function handleAdminChanged(event: AdminChangedEvent): void {
 
   // Update balance when the admin changes
   updateAccountBalance(stLinkTokenAddress, event.params.newAdmin, event);
+
+  // Create a new ERC20 instance if needed (assuming newAdmin is potentially a new ERC20 token contract address)
+  ERC20Template.create(event.params.newAdmin);
 }
 
 // Handle BeaconUpgraded event
@@ -76,8 +79,8 @@ function updateAccountBalance(
     contractAddress.toHex(),
   ]);
 
-  // Bind the ERC20 token contract to the stLinkTokenAddress
-  let contract = ERC20.bind(contractAddress);  // Make sure to use ERC20 binding here
+  // Dynamically bind to the ERC20 token contract using the provided address
+  let contract = ERC20Template.bind(contractAddress);
 
   // Try to get the balance for the provided account address
   let balanceResult = contract.try_balanceOf(accountAddress);
@@ -100,6 +103,7 @@ function updateAccountBalance(
       accountState.wrappedRewards = BigInt.fromI32(0);
       accountState.withdrawableRewards = BigInt.fromI32(0);
       accountState.wrappedTokenBalance = BigInt.fromI32(0);
+      accountState.shares = BigInt.fromI32(0); // Add initialization for shares if necessary
     }
 
     // Update the stLinkBalance with the balance obtained from the contract call

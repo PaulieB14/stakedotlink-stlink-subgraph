@@ -5,7 +5,7 @@ import {
   ERC1967Proxy as ERC1967ProxyContract, // Importing this for event handling from the Proxy
 } from "../generated/ERC1967Proxy/ERC1967Proxy";
 
-import { ERC20Template } from "../generated/templates"; // Import the ERC20 template to create instances dynamically
+import { ERC20 } from "../generated/templates/ERC20Template/ERC20"; // Corrected import path for ERC20 binding
 import { AdminChanged, BeaconUpgraded, Upgraded, AccountState } from "../generated/schema";
 import { Address, BigInt, ethereum, log } from "@graphprotocol/graph-ts";
 
@@ -28,9 +28,6 @@ export function handleAdminChanged(event: AdminChangedEvent): void {
 
   // Update balance when the admin changes
   updateAccountBalance(stLinkTokenAddress, event.params.newAdmin, event);
-
-  // Create a new ERC20 instance if needed (assuming newAdmin is potentially a new ERC20 token contract address)
-  ERC20Template.create(event.params.newAdmin);
 }
 
 // Handle BeaconUpgraded event
@@ -79,8 +76,8 @@ function updateAccountBalance(
     contractAddress.toHex(),
   ]);
 
-  // Dynamically bind to the ERC20 token contract using the provided address
-  let contract = ERC20Template.bind(contractAddress);
+  // Bind the ERC20 token contract to the stLinkTokenAddress
+  let contract = ERC20.bind(contractAddress); // Use ERC20 binding here
 
   // Try to get the balance for the provided account address
   let balanceResult = contract.try_balanceOf(accountAddress);

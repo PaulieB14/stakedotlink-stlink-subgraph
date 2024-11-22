@@ -2,8 +2,10 @@ import {
   AdminChanged as AdminChangedEvent,
   BeaconUpgraded as BeaconUpgradedEvent,
   Upgraded as UpgradedEvent,
-  ERC1967Proxy as ERC1967ProxyContract,
+  ERC1967Proxy as ERC1967ProxyContract,  // Importing this for event handling from the Proxy
 } from "../generated/ERC1967Proxy/ERC1967Proxy";
+
+import { ERC20 } from "../generated/ERC20/ERC20"; // Import the ERC20 binding to access functions like balanceOf
 import { AdminChanged, BeaconUpgraded, Upgraded, AccountState } from "../generated/schema";
 import { Address, BigInt, ethereum, log } from "@graphprotocol/graph-ts";
 
@@ -75,7 +77,7 @@ function updateAccountBalance(
   ]);
 
   // Bind the ERC20 token contract to the stLinkTokenAddress
-  let contract = ERC1967ProxyContract.bind(contractAddress);
+  let contract = ERC20.bind(contractAddress);  // Make sure to use ERC20 binding here
 
   // Try to get the balance for the provided account address
   let balanceResult = contract.try_balanceOf(accountAddress);

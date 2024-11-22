@@ -45,6 +45,8 @@ dataSources:
         - Upgraded
         - AccountState
       abis:
+        - name: ERC20
+          file: ./abis/ERC20.json ##added this to include balanceOf function
         - name: WrappedSDToken
           file: ./abis/WrappedSDToken.json
         - name: ERC1967Proxy

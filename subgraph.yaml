@@ -54,6 +54,8 @@ dataSources:
           file: ./abis/WrappedSDToken.json
         - name: ERC1967Proxy
           file: ./abis/ERC1967Proxy.json
+        - name: StLinkToken
+          file: ./abis/ERC20.json
       eventHandlers:
         - event: AdminChanged(address,address)
           handler: handleAdminChanged
@@ -61,6 +63,8 @@ dataSources:
           handler: handleBeaconUpgraded
         - event: Upgraded(indexed address)
           handler: handleUpgraded
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleERC20Transfer
       file: ./src/erc-1967-proxy.ts
 
   - kind: ethereum

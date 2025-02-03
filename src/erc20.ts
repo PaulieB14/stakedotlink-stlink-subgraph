@@ -32,17 +32,45 @@ export function handleERC20Transfer(event: TransferEvent): void {
   // Get the stLink contract
   const stLinkToken = ERC20.bind(Address.fromString(STLINK_ADDRESS));
   
-  // Query actual balances from the contract
-  fromAccountState.stLinkBalance = stLinkToken.balanceOf(event.params.from);
-  toAccountState.stLinkBalance = stLinkToken.balanceOf(event.params.to);
+  // Query actual balances from the contract with error handling
+  let fromBalanceResult = stLinkToken.try_balanceOf(event.params.from);
+  let toBalanceResult = stLinkToken.try_balanceOf(event.params.to);
+
+  if (!fromBalanceResult.reverted) {
+    fromAccountState.stLinkBalance = fromBalanceResult.value;
+    log.info("Updated FROM balance for {} to {}", [
+      event.params.from.toHex(),
+      fromBalanceResult.value.toString()
+    ]);
+  } else {
+    log.error("Failed to get balance for FROM address {}", [event.params.from.toHex()]);
+  }
+
+  if (!toBalanceResult.reverted) {
+    toAccountState.stLinkBalance = toBalanceResult.value;
+    log.info("Updated TO balance for {} to {}", [
+      event.params.to.toHex(),
+      toBalanceResult.value.toString()
+    ]);
+  } else {
+    log.error("Failed to get balance for TO address {}", [event.params.to.toHex()]);
+  }
+
+  // Update block info
+  fromAccountState.blockNumber = event.block.number;
+  fromAccountState.blockTimestamp = event.block.timestamp;
+  toAccountState.blockNumber = event.block.number;
+  toAccountState.blockTimestamp = event.block.timestamp;
 
   fromAccountState.save();
   toAccountState.save();
 
-  // Log transfer event handling
-  log.info("Handled Transfer event: {} tokens from {} to {}", [
+  // Log final state
+  log.info("Handled Transfer event: {} tokens from {} (balance: {}) to {} (balance: {})", [
     event.params.value.toString(),
     event.params.from.toHex(),
+    fromAccountState.stLinkBalance.toString(),
     event.params.to.toHex(),
+    toAccountState.stLinkBalance.toString()
   ]);
 }

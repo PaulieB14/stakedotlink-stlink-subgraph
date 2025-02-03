@@ -2,18 +2,20 @@ import {
   AdminChanged as AdminChangedEvent,
   BeaconUpgraded as BeaconUpgradedEvent,
   Upgraded as UpgradedEvent,
-  ERC1967Proxy as ERC1967ProxyContract, // Importing this for event handling from the Proxy
+  ERC1967Proxy as ERC1967ProxyContract
 } from "../generated/ERC1967Proxy/ERC1967Proxy";
 
-import { ERC20 } from "../generated/templates/ERC20Template/ERC20"; // Corrected import path for ERC20 binding
+import { Transfer as TransferEvent } from "../generated/templates/ERC20Template/ERC20";
+import { ERC20Template } from "../generated/templates";
+import { ERC20 } from "../generated/templates/ERC20Template/ERC20";
 import { AdminChanged, BeaconUpgraded, Upgraded, AccountState } from "../generated/schema";
 import { Address, BigInt, ethereum, log } from "@graphprotocol/graph-ts";
 
-// Update this address to point to the stLINK token contract address (Proxy contract address)
-let stLinkTokenAddress = Address.fromString("0xb8b295df2cd735b15be5eb419517aa626fc43cD5");
+const STLINK_ADDRESS = "0xb8b295df2cd735b15be5eb419517aa626fc43cD5";
 
-// Handle AdminChanged event
 export function handleAdminChanged(event: AdminChangedEvent): void {
+  // Create ERC20Template instance if it hasn't been created yet
+  ERC20Template.create(Address.fromString(STLINK_ADDRESS));
   let entity = new AdminChanged(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   );
@@ -27,11 +29,28 @@ export function handleAdminChanged(event: AdminChangedEvent): void {
   entity.save();
 
   // Update balance when the admin changes
-  updateAccountBalance(stLinkTokenAddress, event.params.newAdmin, event);
+  updateAccountBalance(Address.fromString(STLINK_ADDRESS), event.params.newAdmin, event);
 }
 
-// Handle BeaconUpgraded event
+// Handle ERC20 Transfer events directly from the proxy
+export function handleERC20Transfer(event: TransferEvent): void {
+  log.info("Handling Transfer event in Proxy for: from {} to {} amount {}", [
+    event.params.from.toHex(),
+    event.params.to.toHex(),
+    event.params.value.toString()
+  ]);
+
+  // Update balances for both addresses
+  updateAccountBalance(Address.fromString(STLINK_ADDRESS), event.params.from, event);
+  updateAccountBalance(Address.fromString(STLINK_ADDRESS), event.params.to, event);
+
+  // Create ERC20Template instance if it hasn't been created yet
+  ERC20Template.create(Address.fromString(STLINK_ADDRESS));
+}
+
 export function handleBeaconUpgraded(event: BeaconUpgradedEvent): void {
+  // Create ERC20Template instance if it hasn't been created yet
+  ERC20Template.create(Address.fromString(STLINK_ADDRESS));
   let entity = new BeaconUpgraded(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   );
@@ -47,8 +66,9 @@ export function handleBeaconUpgraded(event: BeaconUpgradedEvent): void {
   // updateAccountBalance(stLinkTokenAddress, relevantAccountAddress, event);
 }
 
-// Handle Upgraded event
 export function handleUpgraded(event: UpgradedEvent): void {
+  // Create ERC20Template instance if it hasn't been created yet
+  ERC20Template.create(Address.fromString(STLINK_ADDRESS));
   let entity = new Upgraded(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   );

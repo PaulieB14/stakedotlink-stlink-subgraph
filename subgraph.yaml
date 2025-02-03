@@ -22,6 +22,8 @@ dataSources:
       abis:
         - name: RewardsPoolWSD
           file: ./abis/RewardsPoolWSD.json
+        - name: ERC20
+          file: ./abis/ERC20.json
       eventHandlers:
         - event: DistributeRewards(indexed address,uint256,uint256)
           handler: handleDistributeRewards
@@ -47,7 +49,7 @@ dataSources:
         - AccountState
       abis:
         - name: ERC20
-          file: ./abis/ERC20.json
+          file: ./abis/ERC20.json 
         - name: WrappedSDToken
           file: ./abis/WrappedSDToken.json
         - name: ERC1967Proxy

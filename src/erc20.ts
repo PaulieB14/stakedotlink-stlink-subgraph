@@ -1,46 +1,48 @@
-import { Transfer as TransferEvent } from "../generated/ERC20Template/ERC20Template";
+import { Transfer as TransferEvent, ERC20 } from "../generated/templates/ERC20Template/ERC20";
 import { AccountState } from "../generated/schema";
-import { BigInt, log } from "@graphprotocol/graph-ts";
+import { Address, BigInt, log } from "@graphprotocol/graph-ts";
 
-// Handle Transfer event
+const STLINK_ADDRESS = "0xb8b295df2cd735b15BE5Eb419517Aa626fc43cD5";
+
+function getOrCreateAccountState(account: Address): AccountState {
+  let accountState = AccountState.load(account.toHex());
+  if (!accountState) {
+    accountState = new AccountState(account.toHex());
+    accountState.account = account;
+    accountState.stLinkBalance = BigInt.fromI32(0);
+    accountState.rewardsAccumulated = BigInt.fromI32(0);
+    accountState.wrappedRewards = BigInt.fromI32(0);
+    accountState.withdrawableRewards = BigInt.fromI32(0);
+    accountState.wrappedTokenBalance = BigInt.fromI32(0);
+    accountState.lastUpdated = BigInt.fromI32(0);
+  }
+  return accountState;
+}
+
 export function handleERC20Transfer(event: TransferEvent): void {
-  let from = event.params.from.toHex();
-  let to = event.params.to.toHex();
+  let fromAccountState = getOrCreateAccountState(event.params.from);
+  let toAccountState = getOrCreateAccountState(event.params.to);
 
-  // Update sender balance
-  let fromAccount = AccountState.load(from);
-  if (fromAccount == null) {
-    fromAccount = new AccountState(from);
-    fromAccount.account = event.params.from;
-    fromAccount.stLinkBalance = BigInt.fromI32(0);
-    fromAccount.shares = BigInt.fromI32(0);
-    fromAccount.rewardsAccumulated = BigInt.fromI32(0);
-    fromAccount.wrappedRewards = BigInt.fromI32(0);
-    fromAccount.withdrawableRewards = BigInt.fromI32(0);
-    fromAccount.wrappedTokenBalance = BigInt.fromI32(0);
-  }
-  fromAccount.stLinkBalance = fromAccount.stLinkBalance.minus(event.params.value);
-  fromAccount.save();
+  log.info("Transfer event: from {} to {} amount {}", [
+    event.params.from.toHex(),
+    event.params.to.toHex(),
+    event.params.value.toString()
+  ]);
 
-  // Update receiver balance
-  let toAccount = AccountState.load(to);
-  if (toAccount == null) {
-    toAccount = new AccountState(to);
-    toAccount.account = event.params.to;
-    toAccount.stLinkBalance = BigInt.fromI32(0);
-    toAccount.shares = BigInt.fromI32(0);
-    toAccount.rewardsAccumulated = BigInt.fromI32(0);
-    toAccount.wrappedRewards = BigInt.fromI32(0);
-    toAccount.withdrawableRewards = BigInt.fromI32(0);
-    toAccount.wrappedTokenBalance = BigInt.fromI32(0);
-  }
-  toAccount.stLinkBalance = toAccount.stLinkBalance.plus(event.params.value);
-  toAccount.save();
+  // Get the stLink contract
+  const stLinkToken = ERC20.bind(Address.fromString(STLINK_ADDRESS));
+  
+  // Query actual balances from the contract
+  fromAccountState.stLinkBalance = stLinkToken.balanceOf(event.params.from);
+  toAccountState.stLinkBalance = stLinkToken.balanceOf(event.params.to);
+
+  fromAccountState.save();
+  toAccountState.save();
 
   // Log transfer event handling
   log.info("Handled Transfer event: {} tokens from {} to {}", [
     event.params.value.toString(),
-    from,
-    to,
+    event.params.from.toHex(),
+    event.params.to.toHex(),
   ]);
 }
